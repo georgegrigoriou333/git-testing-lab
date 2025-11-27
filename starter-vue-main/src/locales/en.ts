@@ -1,7 +1,11 @@
 const en = {
-    greeting: "Hello World",
-    farewell: "Goodbye World",
-    goToAbout: "Go to About Page"
+    dashboard: "Dashboard",
+    about: "About",
+    settings: "Settings",
+    greeting: "Hello!",
+    farewell: "Goodbye!",
+    goToAbout: "Go to About Page",
+    description: "Use the arrows to navigate."
 } as const;
 
 export type LocaleKeys = keyof typeof en;
