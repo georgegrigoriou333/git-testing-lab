@@ -7,6 +7,10 @@ function handleKeydown(e: KeyboardEvent) {
     emit('direction', 'left');
   } else if (e.key === 'ArrowRight') {
     emit('direction', 'right');
+  } else if (e.key === 'ArrowUp') {
+    emit('direction', 'up');
+  } else if (e.key === 'ArrowDown') {
+    emit('direction', 'down');
   }
 }
 

@@ -3,33 +3,45 @@ import { ref, watch, onMounted, computed } from 'vue';
 const props = defineProps<{ direction?: string }>();
 
 const basePoints = [
-  { x: 0, y: 80 },
-  { x: 50, y: 40 },
-  { x: 100, y: 60 },
-  { x: 150, y: 20 },
-  { x: 200, y: 70 },
-  { x: 250, y: 30 },
-  { x: 300, y: 80 }
+  { x: 0, y: 10 },
+  { x: 10, y: 0 },
+  { x: 20, y: 10 },
+  { x: 30, y: 0 },
+  { x: 40, y: 10 },
+  { x: 50, y: 0 },
+  { x: 60, y: 10 }
 ];
 
-const offset = ref(0);
+const offsetX = ref(-50);
+const offsetY = ref(50);
 const step = 1;
 const t = ref(0);
 
 const animatedPoints = computed(() =>
   basePoints.map((p, i) => ({
-    x: p.x + offset.value,
-    y: p.y + Math.sin(t.value + i) * 10
+    x: p.x + offsetX.value,
+    y: p.y + Math.sin(t.value + i) * 10 + offsetY.value,
+    isSpecial: p.x + offsetX.value === 20
   }))
 );
+
+const showPopup = ref(false);
+watch(animatedPoints, (points) => {
+  if (points.some(p => p.isSpecial)) {
+    showPopup.value = true;
+    setTimeout(() => showPopup.value = false, 2000);
+  }
+});
 
 const polylinePoints = computed(() =>
   animatedPoints.value.map(p => `${p.x},${p.y}`).join(' ')
 );
 
-watch(() => props.direction, (val) => {
-  if (val === 'left') offset.value -= step;
-  if (val === 'right') offset.value += step;
+watch(() => props.direction, dir => {
+  if (dir === 'left') offsetX.value -= step;
+  if (dir === 'right') offsetX.value += step;
+  if (dir === 'up') offsetY.value -= step;
+  if (dir === 'down') offsetY.value += step;
 });
 
 onMounted(() => {
@@ -43,7 +55,7 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col items-center py-6 gap-2">
-    <svg :width="1280" :height="100" viewBox="0 0 320 100">
+    <svg :width="1280" :height="100" viewBox="0 0 1280 100">
       <polyline
         :points="polylinePoints"
         fill="none"
@@ -57,8 +69,8 @@ onMounted(() => {
         :key="i"
         :cx="p.x"
         :cy="p.y"
-        r="5"
-        fill="#3b82f6"
+        :r="p.isSpecial ? 16 : 5"
+        :fill="p.isSpecial ? '#ef4444' : '#3b82f6'"
       />
       <!-- Draw arrows between points -->
       <g v-for="(p, i) in animatedPoints" :key="'arrow-' + i">
@@ -80,12 +92,14 @@ onMounted(() => {
         </template>
       </g>
     </svg>
+    <div v-if="showPopup" class="flex justify-center items-center transform -translate-x-1/2 -translate-y-1/2 text-gray-50 px-8 py-6 rounded-xl shadow-lg z-50 text-sm font-bold">
+      {{ $t('message.reachedPoint20') }}
+    </div>
   </div>
 </template>
 
 <style scoped>
 svg {
-  background: linear-gradient(90deg, #000000FF 0%, #e0e7ef 100%);
   border-radius: 12px;
 }
 </style>
