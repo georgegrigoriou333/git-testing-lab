@@ -1,53 +1,130 @@
+<script setup lang="ts">
+import { computed, ref, onMounted } from "vue";
+import { useStorage } from "@vueuse/core";
+import type { NavigationMenuItem } from "@nuxt/ui";
+import { useI18n } from "vue-i18n";
+import type { Locale } from "./locales/locales";
+
+const { t } = useI18n();
+
+const { locale } = useI18n<{ locale: Locale }>();
+const storedLocale = useStorage<Locale>("locale", locale.value as Locale);
+locale.value = storedLocale.value;
+
+onMounted(() => {
+  console.log("[i18n] Locale set to:", locale.value);
+});
+
+function toggleLocale() {
+  storedLocale.value = storedLocale.value === "en" ? "el" : "en";
+  locale.value = storedLocale.value;
+}
+
+const localeLabel = computed(() =>
+  storedLocale.value === "en" ? "🇬🇧 English" : "🇬🇷 Ελληνικά"
+);
+
+const open = ref(false);
+
+const links: NavigationMenuItem[][] = [
+  [
+    {
+      title: t("dashboard"),
+      icon: "i-lucide-home",
+      to: "/",
+    },
+    {
+      title: t("about"),
+      icon: "i-lucide-info",
+      to: "/about",
+    },
+  ],
+  [
+    {
+      title: t("settings"),
+      icon: "i-lucide-settings",
+      to: "/settings",
+    },
+  ],
+];
+</script>
+
 <template>
   <Suspense>
     <UApp>
+      <!-- Header with Logo and Light/Dark Switch -->
       <UHeader>
         <template #left>
           <RouterLink to="/">
             <AppLogo class="w-auto h-6 shrink-0" />
           </RouterLink>
-
-          <TemplateMenu />
         </template>
-
         <template #right>
           <UColorModeButton />
-
-          <UButton
-            to="https://github.com/nuxt-ui-templates/starter-vue"
-            target="_blank"
-            icon="simple-icons:github"
-            aria-label="GitHub"
-            color="neutral"
-            variant="ghost"
-          />
         </template>
       </UHeader>
 
-      <UMain>
-        <RouterView />
-      </UMain>
+      <UDashboardGroup unit="rem" storage="local">
+        <!-- Sidebar -->
+        <UDashboardSidebar
+          id="default"
+          v-model:open="open"
+          collapsible
+          resizable
+          class="bg-elevated/25 relative"
+          :ui="{ footer: 'lg:border-t lg:border-default' }"
+        >
+          <!-- Sidebar Header -->
+          <template #header="{ collapsed }">
+            <TeamsMenu :collapsed="collapsed" />
+          </template>
 
-      <USeparator icon="simple-icons:vuedotjs" />
+          <!-- Sidebar Main Content -->
+          <template #default="{ collapsed }">
+            <!-- Main Navigation -->
+            <UNavigationMenu
+              :collapsed="collapsed"
+              :items="links[0]"
+              orientation="vertical"
+              tooltip
+              popover
+            />
 
-      <UFooter>
-        <template #left>
-          <p class="text-sm text-muted">
-            Built with Nuxt UI • © {{ new Date().getFullYear() }}
-          </p>
-        </template>
+            <!-- Secondary Navigation -->
+            <UNavigationMenu
+              :collapsed="collapsed"
+              :items="links[1]"
+              orientation="vertical"
+              tooltip
+              class="mt-auto"
+            />
 
-        <template #right>
-          <UButton
-            to="https://github.com/nuxt-ui-templates/starter-vue"
-            target="_blank"
-            icon="simple-icons:github"
-            aria-label="GitHub"
-            color="neutral"
-            variant="ghost"
-          />
-        </template>
-      </UFooter>
+            <!-- Locale Toggle -->
+            <div class="border-t border-default mt-0" />
+            <UButton
+              color="secondary"
+              variant="ghost"
+              block
+              class="justify-items-center"
+              icon="i-lucide-globe"
+              @click="toggleLocale"
+            >
+              {{ localeLabel }}
+            </UButton>
+          </template>
+
+          <!-- Sidebar Footer -->
+          <template #footer="{ collapsed }">
+            <UserMenu :collapsed="collapsed" />
+          </template>
+        </UDashboardSidebar>
+
+        <!-- Main Content -->
+        <RouterView :key="String($route.params.id)" />
+
+        <!-- Notifications -->
+        <NotificationsSlideover />
+      </UDashboardGroup>
     </UApp>
   </Suspense>
 </template>
