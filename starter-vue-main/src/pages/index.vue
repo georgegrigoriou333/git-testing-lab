@@ -5,15 +5,16 @@ import HistoryDiagram from '../components/HistoryDiagram.vue';
 import KeyboardArrowListener from '../components/KeyboardArrowListener.vue';
 
 const { t } = useI18n()
-const direction = ref('');
+const direction = ref<"left" | "right" | "up" | "down" | undefined>(undefined);
 
-function handleDirection(dir: string) {
+function handleDirection(dir: "left" | "right" | "up" | "down") {
 	direction.value = dir;
-	setTimeout(() => direction.value = '', 200);
+	setTimeout(() => direction.value = undefined, 200);
 }
 </script>
 
 <template>
+	
 	<UContainer class="flex flex-col justify-center items-center min-h-screen gap-8">
 		<UCard class="max-w-md w-full">
 			<template #header>
