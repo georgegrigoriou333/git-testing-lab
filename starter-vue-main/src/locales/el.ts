@@ -1,5 +1,5 @@
 const el = {
-    dashboard: "Πίνακας Ελέγχου",
+    dashboard: "Αρχική",
     about: "Σχετικά",
     settings: "Ρυθμίσεις",
     greeting: "Γειά σου!",

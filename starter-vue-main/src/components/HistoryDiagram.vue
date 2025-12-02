@@ -36,12 +36,19 @@ const polylinePoints = computed(() =>
   animatedPoints.value.map(p => `${p.x},${p.y}`).join(' ')
 )
 
-// Popup logic (if needed in future)
+// Tooltip and auto-navigation logic
 const showPopup = ref(false)
+const hasNavigated = ref(false)
 watchEffect(() => {
   if (animatedPoints.value.some(p => p.isSpecial)) {
     showPopup.value = true
     setTimeout(() => (showPopup.value = false), 2000)
+    if (!hasNavigated.value) {
+      hasNavigated.value = true
+      router.push('/ancient')
+    }
+  } else {
+    hasNavigated.value = false
   }
 })
 

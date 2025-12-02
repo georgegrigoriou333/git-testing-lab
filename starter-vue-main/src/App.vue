@@ -30,11 +30,13 @@ const links: NavigationMenuItem[][] = [
   [
     {
       title: t("dashboard"),
+      label: t("dashboard"),
       icon: "i-lucide-home",
       to: "/",
     },
     {
       title: t("about"),
+      label: t("about"),
       icon: "i-lucide-info",
       // to: "/about",
     },
@@ -42,6 +44,7 @@ const links: NavigationMenuItem[][] = [
   [
     {
       title: t("settings"),
+      label: t("settings"),
       icon: "i-lucide-settings",
       // to: "/settings",
     },
@@ -56,7 +59,7 @@ const links: NavigationMenuItem[][] = [
       <UHeader>
         <template #left>
           <RouterLink to="/">
-            <AppLogo class="w-auto h-6 shrink-0" />
+            <AppLogo class="w-auto h-6 shrink-0 -ml-30" />
           </RouterLink>
         </template>
         <template #right>
@@ -80,11 +83,10 @@ const links: NavigationMenuItem[][] = [
               class="flex items-center justify-center h-12 px-4 border-b border-default"
             >
               <AppLogo
-                class="w-auto h-6"
-                :class="collapsed ? 'h-8' : 'h-6'"
+                class="w-auto h-15"
+                :class="collapsed ? 'h-8' : 'h-15'"
               />
             </div>
-            
           </template>
 
           <!-- Sidebar Main Content -->
@@ -137,9 +139,20 @@ const links: NavigationMenuItem[][] = [
         </UDashboardSidebar>
 
         <!-- Main Content -->
-        <RouterView :key="String($route.params.id)" />
+        <Transition name="fade" mode="out-in">
+          <RouterView :key="String($route.fullPath)" />
+        </Transition>
 
       </UDashboardGroup>
     </UApp>
   </Suspense>
 </template>
+
+<style>
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 1.2s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+</style>
