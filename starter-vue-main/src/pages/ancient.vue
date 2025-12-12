@@ -8,7 +8,7 @@ function handleLoaded() {
 }
 
 const bananaCount = ref(0)
-const bananas = ref<{left: number, top: number}[]>([])
+const bananas = ref<{left: number, bottomPx: number}[]>([])
 
 function showRandomBananas(count: number) {
     bananas.value = []
