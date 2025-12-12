@@ -8,22 +8,34 @@ function handleLoaded() {
 }
 
 const bananaCount = ref(0)
-const bananas = ref<{left: number, top: number}[]>([])
+const bananas = ref<{left: number, bottomPx: number}[]>([])
+const blueberries = ref<{left: number, bottomPx: number}[]>([])
 
 function showRandomBananas(count: number) {
     bananas.value = []
     for (let i = 0; i < count; i++) {
         bananas.value.push({
-            left: Math.random() * 80 + 10, // percent (horizontal spread)
+            left: Math.random() * 80 + 10,
             bottomPx: Math.random() * 40 + 80 // 80-120px from bottom
         })
     }
     bananaCount.value = count
 }
 
+function showRandomBlueberries(count: number) {
+    blueberries.value = []
+    for (let i = 0; i < count; i++) {
+        blueberries.value.push({
+            left: Math.random() * 80 + 10,
+            bottomPx: Math.random() * 40 + 80 // 80-120px from bottom
+        })
+    }
+}
+
 onMounted(() => {
     setTimeout(() => {
         showRandomBananas(10)
+        showRandomBlueberries(10)
     }, 3500) // Wait for rolling text animation to finish
 })
 </script>
@@ -47,14 +59,22 @@ onMounted(() => {
             <img src="/banana.png" alt="Banana" class="banana-image" />
         </div>
                 <div class="random-bananas">
-                        <img
-                            v-for="(b, i) in bananas"
-                            :key="i"
-                            src="/banana.png"
-                            alt="Banana"
-                            class="banana-image random"
-                            :style="`position:absolute; left:${b.left}%; bottom:${b.bottomPx}px; z-index:40;`"
-                        />
+                    <img
+                        v-for="(b, i) in bananas"
+                        :key="'banana-' + i"
+                        src="/banana.png"
+                        alt="Banana"
+                        class="banana-image random"
+                        :style="`position:absolute; left:${b.left}%; bottom:${b.bottomPx}px; z-index:40;`"
+                    />
+                    <img
+                        v-for="(bb, i) in blueberries"
+                        :key="'blueberry-' + i"
+                        src="/blueberries.png"
+                        alt="Blueberry"
+                        class="blueberry-image random"
+                        :style="`position:absolute; left:${bb.left}%; bottom:${bb.bottomPx}px; z-index:41;`"
+                    />
                 </div>
     </div>
 </template>
@@ -165,6 +185,19 @@ onMounted(() => {
     object-fit: contain;
     border-radius: 16px;
     border: 2px solid #fbbf24;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    background: none;
+    display: block;
+    margin: 0;
+    opacity: 0.95;
+    pointer-events: none;
+}
+.blueberry-image.random {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 16px;
+    border: 2px solid #3b82f6;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     background: none;
     display: block;
