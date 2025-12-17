@@ -53,22 +53,22 @@ const links: NavigationMenuItem[][] = [
 </script>
 
 <template>
-  <Suspense>
-    <UApp>
-      <!-- Header with Logo and Light/Dark Switch -->
-      <UHeader>
-        <template #left>
-          <RouterLink to="/">
-            <AppLogo class="w-auto h-6 shrink-0 -ml-30" />
-          </RouterLink>
-        </template>
-        <template #right>
-          <UColorModeButton />
-        </template>
-      </UHeader>
+  <UApp>
+    <!-- Header with Logo and Light/Dark Switch -->
+    <UHeader>
+      <template #left>
+        <RouterLink to="/">
+          <AppLogo class="w-auto h-6 shrink-0 -ml-30" />
+        </RouterLink>
+      </template>
+      <template #right>
+        <UColorModeButton />
+      </template>
+    </UHeader>
 
-      <UDashboardGroup unit="rem" storage="local">
-        <!-- Sidebar -->
+    <UDashboardGroup unit="rem" storage="local">
+      <!-- Sidebar -->
+      <Suspense>
         <UDashboardSidebar
           id="default"
           v-model:open="open"
@@ -137,15 +137,14 @@ const links: NavigationMenuItem[][] = [
             </div>
           </template>
         </UDashboardSidebar>
+      </Suspense>
+      <!-- Main Content -->
+      <Transition name="fade" mode="out-in">
+        <RouterView />
+      </Transition>
 
-        <!-- Main Content -->
-        <Transition name="fade" mode="out-in">
-          <RouterView :key="String($route.fullPath)" />
-        </Transition>
-
-      </UDashboardGroup>
-    </UApp>
-  </Suspense>
+    </UDashboardGroup>
+  </UApp>
 </template>
 
 <style>

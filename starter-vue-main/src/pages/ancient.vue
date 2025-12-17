@@ -17,6 +17,13 @@ function handleLoaded() {
 
 const bananaCount = ref(0)
 
+const showSheep = ref(false)
+const sheepDropped = ref(false)
+const sheepFallDuration = ref(1.6)
+const sheepBounce = ref(false)
+const sheepWalk = ref(false)
+const sheepSound = new Audio('/sheep.mp3')
+
 type Fruit = {
     left: number,
     bottomPx: number,
@@ -164,13 +171,47 @@ function nextLevel() {
     startGame()
 }
 
+
+const showSecretMsg = ref(false)
+const secretMsgTitle = ref('')
+const secretMsgBody = ref('')
+
 function revealSecret() {
     setTimeout(() => {
-        alert('Συγχαρητήρια! Αποκάλυψες το μυστικό των Αρχαίων Χρόνων!');
-        alert('Είσαι ένας πραγματικός εξερευνητής των μυστηρίων της ιστορίας! Στα αρχαία χρόνια, οι άνθρωποι ζούσαν με απλότητα και σοφία. Οι πρώτοι άνθρωποι παρήγαγαν λίγα απόβλητα, κυρίως οργανική ύλη που αποσυντίθετο. Οι άνθρωποι έθαβαν τα οικιακά απόβλητα σε λάκκους έξω από τα σπίτια τους ή σε κήπους που βρίσκονταν στο πίσω μέρος του σπιτιού. Έτσι τα απόβλητα μετατρέπονταν σε λίπασμα για τα φυτά και τα φυτά τροφή για τα ζώα και τα ζώα τροφή για τους ίδιους. Ένας ωραίος μεγάλος κύκλος της φύσης!');
+        secretMsgTitle.value = 'Συγχαρητήρια! Αποκάλυψες το μυστικό των Αρχαίων Χρόνων!';
+        secretMsgBody.value = 'Είσαι ένας πραγματικός εξερευνητής των μυστηρίων της ιστορίας! Στα αρχαία χρόνια, οι άνθρωποι ζούσαν με απλότητα και σοφία. Οι πρώτοι άνθρωποι παρήγαγαν λίγα απόβλητα, κυρίως οργανική ύλη που αποσυντίθετο. Οι άνθρωποι έθαβαν τα οικιακά απόβλητα σε λάκκους έξω από τα σπίτια τους ή σε κήπους που βρίσκονταν στο πίσω μέρος του σπιτιού. Έτσι τα απόβλητα μετατρέπονταν σε λίπασμα για τα φυτά και τα φυτά τροφή για τα ζώα και τα ζώα τροφή για τους ίδιους. Ένας ωραίος μεγάλος κύκλος της φύσης!';
+        showSecretMsg.value = true;
+
+        // 🐑 Random fall speed (1.2s – 2.8s)
+        sheepFallDuration.value = Math.random() * 1.6 + 1.2;
+
+        showSheep.value = true;
+        sheepDropped.value = false;
+        sheepBounce.value = false;
+        sheepWalk.value = false;
+
+        // slight delay before drop
+        setTimeout(() => {
+            sheepDropped.value = true;
+            sheepSound.currentTime = 0;
+            sheepSound.play();
+        }, 100);
+
+        // bounce effect after landing
+        setTimeout(() => {
+            sheepBounce.value = true;
+        }, sheepFallDuration.value * 1000);
+
+        // walk effect after bounce
+        setTimeout(() => {
+            sheepWalk.value = true;
+        }, sheepFallDuration.value * 1000 + 1000);
+
+        // navigate after full animation
         setTimeout(() => {
             router.push('/middletimes');
-        }, 600);
+        }, sheepFallDuration.value * 1000 + 5000 + 2500);
+
     }, 100);
 }
 
@@ -199,6 +240,13 @@ onMounted(() => {
         </div>
     </div>
     <div class="map-container">
+        <div v-if="showSecretMsg" class="secret-msg-overlay">
+            <div class="secret-msg-box">
+                <h2>{{ secretMsgTitle }}</h2>
+                <p>{{ secretMsgBody }}</p>
+                <button class="game-btn" @click="showSecretMsg = false">OK</button>
+            </div>
+        </div>
         <div class="rolling-text">
             <span>Καλωσήλθες στους Αρχαίους Χρόνους!</span>
         </div>
@@ -248,6 +296,18 @@ onMounted(() => {
                 @click="bb.falling ? handleFruitClick(bb) : null"
             />
 
+            <img
+                v-if="showSheep"
+                src="/sheep.gif"
+                alt="Sheep"
+                class="sheep-drop"
+                :class="{
+                    dropped: sheepDropped,
+                    bounce: sheepBounce,
+                    walk: sheepWalk
+                }"
+                :style="`transition-duration: ${sheepFallDuration}s;`"
+            />
         </div>
     </div>
 </template>
@@ -530,5 +590,80 @@ onMounted(() => {
     color: #0f1047;
     font-weight: bold;
     margin-bottom: 12px;
+}
+
+.secret-msg-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.45);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.secret-msg-box {
+    background: #fffbe8;
+    border-radius: 18px;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.18);
+    padding: 36px 32px 28px 32px;
+    max-width: 420px;
+    text-align: center;
+    border: 2px solid #fbbf24;
+}
+.secret-msg-box h2 {
+    font-size: 1.5rem;
+    color: #0f1047;
+    margin-bottom: 18px;
+}
+.secret-msg-box p {
+    font-size: 1.1rem;
+    color: #222;
+    margin-bottom: 22px;
+}
+
+.sheep-drop {
+    position: absolute;
+    top: -180px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.7);
+    width: 130px;
+    z-index: 500;
+    pointer-events: none;
+    transition:
+        top cubic-bezier(.22,.61,.36,1),
+        transform 0.4s ease;
+}
+
+.sheep-drop.dropped {
+    top: 70%;
+    transform: translateX(-50%) scale(1);
+}
+
+.sheep-drop.bounce {
+    animation: sheepBounce 0.9s ease-out;
+}
+
+.sheep-drop.walk {
+    animation: sheepWalkLeft 8.5s linear forwards;
+}
+
+@keyframes sheepWalkLeft {
+    0% {
+        left: 50%;
+    }
+    100% {
+        left: -100%;
+    }
+}
+
+@keyframes sheepBounce {
+    0%   { transform: translateX(-50%) scale(1); }
+    30%  { transform: translateX(-50%) scale(1.1) translateY(-12px); }
+    55%  { transform: translateX(-50%) scale(0.95); }
+    75%  { transform: translateX(-50%) scale(1.03); }
+    100% { transform: translateX(-50%) scale(1); }
 }
 </style>
