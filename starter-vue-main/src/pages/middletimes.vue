@@ -2,17 +2,18 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
+const router = useRouter();
+
 // Sound effects
 const clickSound = new Audio('/clickon.mp3');
 const nextLevelSound = new Audio('/nextlevel.mp3');
+
 // Game level state
 const level = ref(1)
 
-const router = useRouter();
-
 const loading = ref(true)
 function handleLoaded() {
-        loading.value = false
+    loading.value = false
 }
 
 const bananaCount = ref(0)
@@ -169,7 +170,7 @@ function revealSecret() {
         alert('Συγχαρητήρια! Αποκάλυψες το μυστικό των Αρχαίων Χρόνων!');
         alert('Είσαι ένας πραγματικός εξερευνητής των μυστηρίων της ιστορίας! Στα αρχαία χρόνια, οι άνθρωποι ζούσαν με απλότητα και σοφία. Οι πρώτοι άνθρωποι παρήγαγαν λίγα απόβλητα, κυρίως οργανική ύλη που αποσυντίθετο. Οι άνθρωποι έθαβαν τα οικιακά απόβλητα σε λάκκους έξω από τα σπίτια τους ή σε κήπους που βρίσκονταν στο πίσω μέρος του σπιτιού. Έτσι τα απόβλητα μετατρέπονταν σε λίπασμα για τα φυτά και τα φυτά τροφή για τα ζώα και τα ζώα τροφή για τους ίδιους. Ένας ωραίος μεγάλος κύκλος της φύσης!');
         setTimeout(() => {
-            router.push('/middletimes');
+            router.push('/moderntimes');
         }, 600);
     }, 100);
 }
@@ -178,7 +179,6 @@ onMounted(() => {
     // Show start button initially
     showTotalProgressBar.value = false
     gameStarted.value = false
-    revealSecret();
 })
 </script>
 
