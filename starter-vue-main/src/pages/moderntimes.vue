@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+// i-lucide icons must be globally registered in main.ts or use lucide-vue plugin
+import FactoryTrucks from '../components/FactoryTrucks.vue'
 
 // Sound effects
-const clickSound = new Audio('/clickon.mp3');
+//const clickSound = new Audio('/clickon.mp3');
 const nextLevelSound = new Audio('/nextlevel.mp3');
 
 // Game level state
@@ -13,98 +15,51 @@ function handleLoaded() {
         loading.value = false
 }
 
-const bananaCount = ref(0)
-
-type Fruit = {
-    left: number,
-    bottomPx: number,
-    id: string,
-    type: 'banana' | 'blueberry',
-    collected?: boolean,
-    falling?: boolean,
-    fallDuration?: number,
-    splash?: boolean
-}
-
-const bananas = ref<Array<Fruit & { falling?: boolean }>>([])
-const blueberries = ref<Array<Fruit & { falling?: boolean }>>([])
-
 // Total progress bar
+
+// Play state for trucks
+const playTrucks = ref(false)
+
 const totalProgress = ref(0)
 function updateTotalProgress() {
-    const total = bananas.value.length + blueberries.value.length;
-    const collected = bananas.value.filter(b => b.collected).length + blueberries.value.filter(b => b.collected).length;
-    totalProgress.value = total > 0 ? Math.round((collected / total) * 100) : 0;
+        
 }
 
-function showRandomBananas(count: number) {
-    bananas.value = []
-    for (let i = 0; i < count; i++) {
-        bananas.value.push({
-            left: Math.random() * 80 + 10,
-            bottomPx: 600,
-            id: 'banana-' + i + '-' + Math.random().toString(36).slice(2),
-            type: 'banana',
-            falling: true,
-            fallDuration: level.value === 2 ? Math.random() * 8 + 14 : 20 // random for level 2, fixed for level 1
-        })
-    }
-    bananaCount.value = count
-    // Animate drop (slow)
-    setTimeout(() => {
-        bananas.value = bananas.value.map(b => ({ ...b, bottomPx: Math.random() * 40 + 80 }))
-        setTimeout(() => {
-            bananas.value = bananas.value.map(b => ({ ...b, falling: false }))
-        }, 20000)
+// Timer clock
+// Scratch book (notepad)
+const scratchBook = ref('')
+function clearScratchBook() {
+    scratchBook.value = ''
+}
+const timer = ref(30)
+const timerActive = ref(false)
+let timerInterval: number | null = null
+
+function startTimer() {
+    timer.value = 30
+    timerActive.value = true
+    if (timerInterval) clearInterval(timerInterval)
+    timerInterval = window.setInterval(() => {
+        if (timer.value > 0) {
+            timer.value--
+        } else {
+            timerActive.value = false
+            clearInterval(timerInterval!)
+            timerInterval = null
+            playTrucks.value = false // Stop trucks when time ends
+            // End game if timer runs out
+            if (gameStarted.value && !gameOver.value && !canNextLevel.value) {
+                checkGameOver()
+            }
+        }
     }, 1000)
 }
 
-function showRandomBlueberries(count: number) {
-    blueberries.value = []
-    for (let i = 0; i < count; i++) {
-        blueberries.value.push({
-            left: Math.random() * 80 + 10,
-            bottomPx: 600,
-            id: 'blueberry-' + i + '-' + Math.random().toString(36).slice(2),
-            type: 'blueberry',
-            falling: true,
-            fallDuration: level.value === 2 ? Math.random() * 8 + 14 : 20
-        })
-    }
-    setTimeout(() => {
-        blueberries.value = blueberries.value.map(bb => ({ ...bb, bottomPx: Math.random() * 40 + 80 }))
-        setTimeout(() => {
-            blueberries.value = blueberries.value.map(bb => ({ ...bb, falling: false }))
-        }, 20000)
-    }, 1000)
-}
-
-function handleFruitClick(fruit: Fruit & { falling?: boolean }) {
-    if (fruit.collected || !fruit.falling) return;
-    // Play click sound
-    clickSound.currentTime = 0;
-    clickSound.play();
-    // Splash effect
-    if (fruit.type === 'banana') {
-        const idx = bananas.value.findIndex(b => b.id === fruit.id);
-        if (idx !== -1) {
-            bananas.value[idx].splash = true;
-            setTimeout(() => {
-                bananas.value[idx].splash = false;
-                bananas.value[idx].collected = true;
-                updateTotalProgress();
-            }, 350);
-        }
-    } else {
-        const idx = blueberries.value.findIndex(b => b.id === fruit.id);
-        if (idx !== -1) {
-            blueberries.value[idx].splash = true;
-            setTimeout(() => {
-                blueberries.value[idx].splash = false;
-                blueberries.value[idx].collected = true;
-                updateTotalProgress();
-            }, 350);
-        }
+function stopTimer() {
+    timerActive.value = false
+    if (timerInterval) {
+        clearInterval(timerInterval)
+        timerInterval = null
     }
 }
 
@@ -118,9 +73,9 @@ function startGame() {
     resetGame()
     gameStarted.value = true
     showTotalProgressBar.value = true
+    playTrucks.value = true
+    startTimer()
     setTimeout(() => {
-        showRandomBananas(10)
-        showRandomBlueberries(10)
         setTimeout(() => {
             updateTotalProgress()
         }, 500)
@@ -132,16 +87,17 @@ function startGame() {
 }
 
 function resetGame() {
-    bananas.value = []
-    blueberries.value = []
     totalProgress.value = 0
     gameOver.value = false
     canRetry.value = false
     canNextLevel.value = false
+    playTrucks.value = false
+    stopTimer()
 }
 
 function checkGameOver() {
     updateTotalProgress()
+    stopTimer()
     if (totalProgress.value === 100) {
         canNextLevel.value = true
         gameOver.value = false
@@ -171,11 +127,39 @@ onMounted(() => {
     // Show start button initially
     showTotalProgressBar.value = false
     gameStarted.value = false
+    stopTimer()
 })
 </script>
 
 <template>
     <div class="total-progress-bar-fixed">
+                <!-- Scratch Book Notepad -->
+                <div class="scratch-book">
+                    <div class="scratch-book-header">
+                        <span>Scratch Book</span>
+                        <button class="scratch-book-clear" @click="clearScratchBook">Clear</button>
+                    </div>
+                    <textarea
+                        v-model="scratchBook"
+                        class="scratch-book-textarea"
+                        placeholder="Write numbers or notes here..."
+                        rows="6"
+                    ></textarea>
+                </div>
+        <div class="timer-clock">
+            <svg width="48" height="48" viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="20" stroke="#3b82f6" stroke-width="4" fill="none" />
+                <circle
+                    cx="24" cy="24" r="20"
+                    stroke="#fbbf24" stroke-width="4" fill="none"
+                    :stroke-dasharray="Math.PI * 40"
+                    :stroke-dashoffset="Math.PI * 40 * (1 - timer / 30)"
+                    stroke-linecap="round"
+                    style="transition: stroke-dashoffset 1s linear;"
+                />
+                <text x="24" y="28" text-anchor="middle" font-size="18" fill="#222">{{ timer }}</text>
+            </svg>
+        </div>
         <div class="total-progress-label">Συνολική Πρόοδος</div>
         <div class="progress-bar total">
             <div class="progress-bar-inner total" :style="`width: ${totalProgress}%;`"></div>
@@ -191,60 +175,93 @@ onMounted(() => {
         </div>
     </div>
     <div class="map-container">
+        <FactoryTrucks :play="playTrucks" />
         <div class="rolling-text">
-            <span>Καλωσήλθες στους Αρχαίους Χρόνους!</span>
+            <span>Καλωσήλθες στους Μοντέρνους Χρόνους!</span>
         </div>
         <div class="rolling-text2">
-            <span>Εξερεύνησε τα Μυστήρια των Αρχαίων Αποβλήτων</span>
+            <span>Εξερεύνησε τα Μυστήρια των Σύγχρονων Αποβλήτων</span>
         </div>
         <div class="rolling-text3">
             <span>
-                Οι πρώτοι άνθρωποι εμφανίστηκαν πριν από περίπου 2,5 εκατομμύρια χρόνια. 
-                Κατά την αρχαιότητα, οι άνθρωποι ζούσαν κυρίως ως κυνηγοί-τροφοσυλλέκτες,
-                χρησιμοποιώντας απλά εργαλεία από πέτρα και ξύλο.
+                Μετά τον 18ο αιώνα, το περιβαλλοντικό αποτύπωμα αυξήθηκε δραματικά λόγω της Βιομηχανικής Επανάστασης, που σήμανε την εξάρτηση από τα ορυκτά καύσιμα, την αύξηση της κατανάλωσης και της παραγωγής αποβλήτων, και την εκμετάλλευση πόρων, οδηγώντας σε κλιματική αλλαγή και περιβαλλοντικές πιέσεις, αν και η τεχνολογική πρόοδος και η κοινωνική ευαισθητοποίηση προσφέρουν λύσεις σήμερα. 
                 <br /><br />
-                Μάζεψε όλα τα φρούτα πριν πέσουν στο έδαφος για να μάθεις περισσότερα!
+                Η WasteCloud έχει στον πυρήνα της την προστασία του περιβάλλοντος και θέλει να μας βοηθήσει να κατανοήσουμε καλύτερα πώς να μειώσουμε, να επαναχρησιμοποιήσουμε και να ανακυκλώσουμε τα απόβλήτά μας.
+                <br /><br />
+                Κατέγραψε χρησιμοποιώντας τα εργαλεία που προσφέρει η WasteCloud τα απόβλητα που παράγουν τα εργοστάσιά μας έτσι ώστε να υπάρχει σωστός έλεγχος για το τι παράγει, τι πετάει και τι ανακυκλώνει η κάθε επιχείρηση!
             </span>
         </div>
         <img
             v-show="!loading"
-            src="/ancient.png"
-            alt="Ancient Map"
+            src="/city-night-time.jpg"
+            alt="Modern City"
             class="map-image"
             @load="handleLoaded"
         />
-        <div class="banana-image-row">
-            <img src="/banana.png" alt="Banana" class="banana-image" />
-        </div>
-        <div class="random-bananas">
-            <img
-                v-for="b in bananas"
-                :key="b.id"
-                v-show="!b.collected"
-                src="/banana.png"
-                alt="Banana"
-                class="banana-image random drop-fruit clickable-fruit"
-                :class="{ 'fruit-splash': b.splash }"
-                :style="`position:absolute; left:${b.left}%; bottom:${b.bottomPx}px; z-index:40; transition: bottom ${b.fallDuration ?? 30}s cubic-bezier(.4,0,.2,1); ${b.falling ? 'pointer-events:auto;cursor:pointer;' : 'pointer-events:none;cursor:default;'} `"
-                @click="b.falling ? handleFruitClick(b) : null"
-            />
-            <img
-                v-for="bb in blueberries"
-                :key="bb.id"
-                v-show="!bb.collected"
-                src="/blueberries.png"
-                alt="Blueberry"
-                class="blueberry-image random drop-fruit clickable-fruit"
-                :class="{ 'fruit-splash': bb.splash }"
-                :style="`position:absolute; left:${bb.left}%; bottom:${bb.bottomPx}px; z-index:41; transition: bottom ${bb.fallDuration ?? 30}s cubic-bezier(.4,0,.2,1); ${bb.falling ? 'pointer-events:auto;cursor:pointer;' : 'pointer-events:none;cursor:default;'} `"
-                @click="bb.falling ? handleFruitClick(bb) : null"
-            />
-
-        </div>
     </div>
 </template>
 
 <style scoped>
+/* Scratch Book Styles */
+.scratch-book {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 220px;
+    background: #fffbe8;
+    border: 2px solid #fbbf24;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    padding: 12px 12px 8px 12px;
+    z-index: 350;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.scratch-book-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #b8860b;
+    margin-bottom: 4px;
+}
+.scratch-book-clear {
+    background: none;
+    border: none;
+    color: #f59e42;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+.scratch-book-clear:hover {
+    background: #fbbf24;
+    color: #fff;
+}
+.scratch-book-textarea {
+    width: 100%;
+    min-height: 90px;
+    border: 1.5px solid #fbbf24;
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 1.1rem;
+    font-family: 'Fira Mono', 'Consolas', monospace;
+    background: #fff;
+    resize: vertical;
+    color: #222;
+    box-sizing: border-box;
+}
+/* Timer clock styles */
+.timer-clock {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
 @keyframes fruitSplash {
     0% {
         transform: scale(1) rotate(0deg);
@@ -317,7 +334,8 @@ onMounted(() => {
     justify-content: center;
     font-size: 1rem;
     font-weight: bold;
-    color: #292a62;
+    color: #141659;
+    background-color: #499cfbab;
     animation: rollDown3 3.5s cubic-bezier(.4,0,.2,1) forwards;
     z-index: 20;
 }
@@ -444,7 +462,7 @@ onMounted(() => {
 
 .total-progress-bar-fixed {
     position: fixed;
-    top: 24px;
+    top: 74px;
     right: 32px;
     z-index: 300;
     background: rgba(51, 154, 245, 0.98);

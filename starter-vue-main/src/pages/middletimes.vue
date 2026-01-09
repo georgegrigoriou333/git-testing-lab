@@ -14,6 +14,7 @@ const captureSound = new Audio('/clickon.mp3')
 const nextLevelSound = new Audio('/nextlevel.mp3')
 
 /* ------------------ Game State ------------------ */
+
 const level = ref(1)
 const gameStarted = ref(false)
 const gameOver = ref(false)
@@ -26,15 +27,47 @@ const secretMsgBody = ref('')
 
 const totalProgress = ref(0)
 
+// Timer clock
+const timer = ref(30)
+const timerActive = ref(false)
+let timerInterval: number | null = null
+
+function startTimer() {
+  timer.value = 30
+  timerActive.value = true
+  if (timerInterval) clearInterval(timerInterval)
+  timerInterval = window.setInterval(() => {
+    if (timer.value > 0) {
+      timer.value--
+    } else {
+      timerActive.value = false
+      clearInterval(timerInterval!)
+      timerInterval = null
+      // End game if timer runs out
+      if (gameStarted.value && !gameOver.value && !canNextLevel.value) {
+        endGame()
+      }
+    }
+  }, 1000)
+}
+
+function stopTimer() {
+  timerActive.value = false
+  if (timerInterval) {
+    clearInterval(timerInterval)
+    timerInterval = null
+  }
+}
+
 /* ------------------ Cat ------------------ */
-const cat = ref({ x: 50, y: 70 }) // %
+const cat = ref({ x: 45, y: 30 }) // %
 const CAT_SPEED = 3
 
 function moveCat(dir: 'left' | 'right' | 'up' | 'down') {
   if (dir === 'left') cat.value.x = Math.max(0, cat.value.x - CAT_SPEED)
   if (dir === 'right') cat.value.x = Math.min(90, cat.value.x + CAT_SPEED)
-  if (dir === 'up') cat.value.y = Math.min(90, cat.value.y + CAT_SPEED)
-  if (dir === 'down') cat.value.y = Math.max(0, cat.value.y - CAT_SPEED)
+  //if (dir === 'up') cat.value.y = Math.min(90, cat.value.y + CAT_SPEED)
+  //if (dir === 'down') cat.value.y = Math.max(0, cat.value.y - CAT_SPEED)
 }
 
 /* ------------------ Rodents ------------------ */
@@ -132,10 +165,12 @@ function startGame() {
   resetGame()
   gameStarted.value = true
   spawnRodents(8)
+  startTimer()
 }
 
 function resetGame() {
   stopLoop()
+  stopTimer()
   rodents.value = []
   totalProgress.value = 0
   gameOver.value = false
@@ -145,6 +180,7 @@ function resetGame() {
 
 function endGame() {
   stopLoop()
+  stopTimer()
   if (totalProgress.value === 100) {
     canNextLevel.value = true
   } else {
@@ -172,25 +208,47 @@ function handleKey(e: KeyboardEvent) {
   if (e.key === 'ArrowDown') moveCat('down')
 }
 
-onMounted(() => window.addEventListener('keydown', handleKey))
-onUnmounted(() => window.removeEventListener('keydown', handleKey))
+onMounted(() => {
+  window.addEventListener('keydown', handleKey)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKey)
+  stopTimer()
+})
 </script>
 
 <template>
     <div class="total-progress-bar-fixed">
-        <div class="total-progress-label">Συνολική Πρόοδος</div>
-        <div class="progress-bar total">
-            <div class="progress-bar-inner total" :style="`width: ${totalProgress}%;`"></div>
-        </div>
-        <div class="total-progress-value">{{ totalProgress }}%</div>
-        <div v-if="!gameStarted" class="game-btns-bar">
-            <button class="game-btn" @click="startGame">Ξεκίνα το παιχνίδι</button>
-        </div>
-        <div class="game-btns-bar">
-            <button v-if="gameOver && canRetry" class="game-btn" @click="startGame">Ξαναπροσπάθησε</button>
-            <button v-if="canNextLevel && level === 1" class="game-btn" @click="nextLevel">Επόμενο επίπεδο</button>
-            <button v-if="canNextLevel && level === 2" class="game-btn" @click="revealSecret">Αποκάλυψε το μυστικό</button>
-        </div>
+      <div class="timer-clock">
+        <svg width="48" height="48" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="20" stroke="#3b82f6" stroke-width="4" fill="none" />
+          <circle
+            cx="24" cy="24" r="20"
+            stroke="#fbbf24" stroke-width="4" fill="none"
+            :stroke-dasharray="Math.PI * 40"
+            :stroke-dashoffset="Math.PI * 40 * (1 - timer / 30)"
+            stroke-linecap="round"
+            style="transition: stroke-dashoffset 1s linear;"
+          />
+          <text x="24" y="28" text-anchor="middle" font-size="18" fill="#222">{{ timer }}</text>
+        </svg>
+      </div>
+      <div class="total-progress-label">Συνολική Πρόοδος</div>
+      <div class="progress-bar total">
+        <div class="progress-bar-inner total" :style="`width: ${totalProgress}%;`"></div>
+      </div>
+      <div class="total-progress-value">{{ totalProgress }}%</div>
+      <div v-if="!gameStarted" class="game-btns-bar">
+        <button class="game-btn" @click="startGame">Ξεκίνα το παιχνίδι</button>
+      </div>
+      <div class="game-btns-bar">
+        <button v-if="gameOver && canRetry" class="game-btn" @click="startGame">Ξαναπροσπάθησε</button>
+        <button v-if="canNextLevel && level === 1" class="game-btn" @click="nextLevel">Επόμενο επίπεδο</button>
+        <button v-if="canNextLevel && level === 2" class="game-btn" @click="revealSecret">Αποκάλυψε το μυστικό</button>
+      </div>
+      <UButton>
+        <router-link to="/moderntimes">Skip to ModernTimes</router-link>
+      </UButton>
     </div>
     <div class="map-container">
         <div v-if="showSecretMsg" class="secret-msg-overlay">
@@ -240,6 +298,13 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey))
 </template>
 
 <style scoped>
+/* Timer clock styles */
+.timer-clock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
 .rolling-text {
     position: absolute;
     left: 50%;
@@ -362,7 +427,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey))
 
 .total-progress-bar-fixed {
   position: fixed;
-  top: 24px;
+  top: 74px;
   right: 32px;
   z-index: 300;
   background: rgba(51, 154, 245, 0.98);

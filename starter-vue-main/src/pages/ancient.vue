@@ -219,7 +219,6 @@ onMounted(() => {
     // Show start button initially
     showTotalProgressBar.value = false
     gameStarted.value = false
-    revealSecret();
 })
 </script>
 
@@ -238,6 +237,9 @@ onMounted(() => {
             <button v-if="canNextLevel && level === 1" class="game-btn" @click="nextLevel">Επόμενο επίπεδο</button>
             <button v-if="canNextLevel && level === 2" class="game-btn" @click="revealSecret">Αποκάλυψε το μυστικό</button>
         </div>
+        <UButton>
+            <router-link to="/middletimes">Skip to MiddleTimes</router-link>
+        </UButton>
     </div>
     <div class="map-container">
         <div v-if="showSecretMsg" class="secret-msg-overlay">
@@ -512,7 +514,7 @@ onMounted(() => {
 
 .total-progress-bar-fixed {
     position: fixed;
-    top: 24px;
+    top: 74px;
     right: 32px;
     z-index: 300;
     background: rgba(51, 154, 245, 0.98);
